@@ -1,0 +1,7 @@
+
+# Development
+
+## Tests
+```
+make test
+```
