@@ -10,6 +10,7 @@ bytes = "1"
 combine = "4"
 quick-protobuf = "0.8.1"
 thiserror = "1"
+url = "2.3.1"
 
 [build-dependencies]
 pb-rs = "0.10.0"

@@ -132,7 +132,7 @@ pipeline {
           sh "mkdir -p ${NPM_CONFIG_CACHE}"
           sh "unset CARGO_REGISTRIES_CRATES_IO_PROTOCOL; cargo install cargo-edit"
           configFileProvider(NPMRC) {
-            sh 'npm i && npm run release:dry'
+            sh 'npm i && npm run release'
           }
         }
       }
