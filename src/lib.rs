@@ -2,38 +2,42 @@ use quick_protobuf::MessageRead;
 
 mod opentelemetry_types;
 mod validation;
-mod opentelemetry_internal {
-    pub use crate::opentelemetry_types::opentelemetry::proto::metrics::v1::*;
-    pub use crate::validation::common::CommonValidate;
-    pub use crate::validation::metrics::MetricValidate;
-}
 
 pub mod opentelemetry {
     pub mod common {
-        pub use crate::opentelemetry_internal::CommonValidate as Validate;
-        pub use crate::opentelemetry_internal::{
+        pub use crate::opentelemetry_types::opentelemetry::proto::common::v1::{
             mod_AnyValue::OneOfvalue as AnyValueOneOfvalue, AnyValue, ArrayValue,
             InstrumentationScope, KeyValue, Resource,
         };
+        pub use crate::validation::common::CommonValidate as Validate;
     }
 
     pub mod metrics {
-        pub use crate::opentelemetry_internal::MetricValidate as Validate;
-        pub use crate::opentelemetry_internal::{
-            mod_AnyValue::OneOfvalue as AnyValueOneOfvalue,
+        pub use crate::opentelemetry::common::{
+            AnyValue, AnyValueOneOfvalue, ArrayValue, InstrumentationScope, KeyValue, Resource,
+        };
+        pub use crate::opentelemetry_types::opentelemetry::proto::metrics::v1::{
             mod_Exemplar::OneOfvalue as ExemplarOneOfvalue,
             mod_ExponentialHistogramDataPoint::Buckets as ExponentialHistogramDataPointBuckets,
             mod_Metric::OneOfdata as MetricOneOfdata,
             mod_NumberDataPoint::OneOfvalue as NumberDataPointOneOfvalue,
             mod_SummaryDataPoint::ValueAtQuantile as SummaryDataPointValueAtQuantile,
-            AggregationTemporality, AnyValue, ArrayValue, Exemplar, ExponentialHistogram,
-            ExponentialHistogramDataPoint, ExportMetricsServiceRequest, Gauge, Histogram,
-            HistogramDataPoint, InstrumentationScope, KeyValue, Metric, NumberDataPoint, Resource,
-            ResourceMetrics, ScopeMetrics, Sum, Summary, SummaryDataPoint,
+            AggregationTemporality, Exemplar, ExponentialHistogram, ExponentialHistogramDataPoint,
+            ExportMetricsServiceRequest, Gauge, Histogram, HistogramDataPoint, Metric,
+            NumberDataPoint, ResourceMetrics, ScopeMetrics, Sum, Summary, SummaryDataPoint,
         };
+        pub use crate::validation::metrics::MetricValidate as Validate;
     }
 
-    pub mod logs {}
+    pub mod logs {
+        pub use crate::opentelemetry::common::{
+            AnyValue, AnyValueOneOfvalue, ArrayValue, InstrumentationScope, KeyValue, Resource,
+        };
+        pub use crate::opentelemetry_types::opentelemetry::proto::logs::v1::{
+            ExportLogsServiceRequest, LogRecord, ResourceLogs, ScopeLogs, SeverityNumber,
+        };
+        pub use crate::validation::logs::LogValidate as Validate;
+    }
 }
 
 #[derive(thiserror::Error, std::fmt::Debug)]
@@ -61,9 +65,22 @@ impl<'a> TryFrom<&'a [u8]> for opentelemetry::metrics::ExportMetricsServiceReque
     }
 }
 
+impl<'a> TryFrom<&'a [u8]> for opentelemetry::logs::ExportLogsServiceRequest<'a> {
+    type Error = crate::Error;
+
+    fn try_from(bytes: &'a [u8]) -> Result<Self, Self::Error> {
+        let mut reader = quick_protobuf::BytesReader::from_bytes(bytes);
+        Ok(opentelemetry::logs::ExportLogsServiceRequest::from_reader(
+            &mut reader,
+            bytes,
+        )?)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::validation::common::CommonValidate;
+    use crate::validation::logs::LogValidate;
     use crate::validation::metrics::MetricValidate;
     use quick_protobuf::{BytesReader, Writer};
     use std::borrow::Cow;
@@ -695,5 +712,176 @@ mod tests {
             .expect("Parsing of metrics protobuf failed")
             .validate()
             .expect("Validation of metrics protobuf failed");
+    }
+
+    #[test]
+    fn roundtrip_logs_valid_data() {
+        use crate::opentelemetry::logs::{
+            AnyValue, AnyValueOneOfvalue, ExportLogsServiceRequest, InstrumentationScope, KeyValue,
+            LogRecord, Resource, ResourceLogs, ScopeLogs, SeverityNumber,
+        };
+
+        let mut out = vec![];
+
+        let key_value = KeyValue {
+            key: Cow::from("test"),
+            value: Some(AnyValue {
+                value: AnyValueOneOfvalue::string_value(Cow::from("test")),
+            }),
+        };
+
+        let logs_data = ExportLogsServiceRequest {
+            resource_logs: vec![ResourceLogs {
+                resource: Some(Resource {
+                    attributes: vec![key_value.clone()],
+                    dropped_attributes_count: 10,
+                }),
+                scope_logs: vec![ScopeLogs {
+                    scope: Some(InstrumentationScope {
+                        name: Cow::from("test_name"),
+                        version: Cow::from("1.2.3"),
+                        attributes: vec![key_value.clone()],
+                        dropped_attributes_count: 10,
+                    }),
+                    log_records: vec![LogRecord {
+                        time_unix_nano: 1681339577345243523,
+                        observed_time_unix_nano: 1681339577345243523,
+                        severity_number: SeverityNumber::SEVERITY_NUMBER_INFO,
+                        severity_text: Cow::from("test_text"),
+                        body: Some(AnyValue {
+                            value: AnyValueOneOfvalue::string_value(Cow::from("test")),
+                        }),
+                        attributes: vec![key_value.clone()],
+                        dropped_attributes_count: 10,
+                        flags: 1,
+                        span_id: Cow::from("test".as_bytes()),
+                        trace_id: Cow::from("test".as_bytes()),
+                    }],
+                    schema_url: Cow::from("https://some_url.com"),
+                }],
+                schema_url: Cow::from("https://some_url.com"),
+            }],
+        };
+        {
+            let mut writer = Writer::new(&mut out);
+            writer.write_message(&logs_data).expect("failed to write");
+        }
+
+        let expected: [u8; 186] = [
+            184, 1, 10, 181, 1, 10, 18, 10, 14, 10, 4, 116, 101, 115, 116, 18, 6, 10, 4, 116, 101,
+            115, 116, 16, 10, 18, 136, 1, 10, 36, 10, 9, 116, 101, 115, 116, 95, 110, 97, 109, 101,
+            18, 5, 49, 46, 50, 46, 51, 26, 14, 10, 4, 116, 101, 115, 116, 18, 6, 10, 4, 116, 101,
+            115, 116, 32, 10, 18, 74, 9, 131, 249, 119, 254, 111, 81, 85, 23, 89, 131, 249, 119,
+            254, 111, 81, 85, 23, 16, 9, 26, 9, 116, 101, 115, 116, 95, 116, 101, 120, 116, 42, 6,
+            10, 4, 116, 101, 115, 116, 50, 14, 10, 4, 116, 101, 115, 116, 18, 6, 10, 4, 116, 101,
+            115, 116, 56, 10, 69, 1, 0, 0, 0, 74, 4, 116, 101, 115, 116, 82, 4, 116, 101, 115, 116,
+            26, 20, 104, 116, 116, 112, 115, 58, 47, 47, 115, 111, 109, 101, 95, 117, 114, 108, 46,
+            99, 111, 109, 26, 20, 104, 116, 116, 112, 115, 58, 47, 47, 115, 111, 109, 101, 95, 117,
+            114, 108, 46, 99, 111, 109,
+        ];
+
+        assert_eq!(&out, &expected[..]);
+
+        let read_message = {
+            let mut reader = BytesReader::from_bytes(&out);
+            reader
+                .read_message::<ExportLogsServiceRequest>(&out)
+                .expect("Cannot read message")
+        };
+        assert_eq!(logs_data, read_message);
+        logs_data.validate().expect("validation failed");
+    }
+
+    #[test]
+    fn roundtrip_logs_invalid_schema_url() {
+        use crate::opentelemetry::logs::{
+            AnyValue, AnyValueOneOfvalue, ExportLogsServiceRequest, InstrumentationScope, KeyValue,
+            LogRecord, Resource, ResourceLogs, ScopeLogs, SeverityNumber,
+        };
+
+        let mut out = vec![];
+
+        let key_value = KeyValue {
+            key: Cow::from("test"),
+            value: Some(AnyValue {
+                value: AnyValueOneOfvalue::string_value(Cow::from("test")),
+            }),
+        };
+
+        let logs_data = ExportLogsServiceRequest {
+            resource_logs: vec![ResourceLogs {
+                resource: Some(Resource {
+                    attributes: vec![key_value.clone()],
+                    dropped_attributes_count: 10,
+                }),
+                scope_logs: vec![ScopeLogs {
+                    scope: Some(InstrumentationScope {
+                        name: Cow::from("test_name"),
+                        version: Cow::from("1.2.3"),
+                        attributes: vec![key_value.clone()],
+                        dropped_attributes_count: 10,
+                    }),
+                    log_records: vec![LogRecord {
+                        time_unix_nano: 1681339577345243523,
+                        observed_time_unix_nano: 1681339577345243523,
+                        severity_number: SeverityNumber::SEVERITY_NUMBER_INFO,
+                        severity_text: Cow::from("test_text"),
+                        body: Some(AnyValue {
+                            value: AnyValueOneOfvalue::string_value(Cow::from("test")),
+                        }),
+                        attributes: vec![key_value.clone()],
+                        dropped_attributes_count: 10,
+                        flags: 1,
+                        span_id: Cow::from("test".as_bytes()),
+                        trace_id: Cow::from("test".as_bytes()),
+                    }],
+                    schema_url: Cow::from("https://"),
+                }],
+                schema_url: Cow::from("https://"),
+            }],
+        };
+        {
+            let mut writer = Writer::new(&mut out);
+            writer.write_message(&logs_data).expect("failed to write");
+        }
+
+        let expected: [u8; 161] = [
+            159, 1, 10, 156, 1, 10, 18, 10, 14, 10, 4, 116, 101, 115, 116, 18, 6, 10, 4, 116, 101,
+            115, 116, 16, 10, 18, 124, 10, 36, 10, 9, 116, 101, 115, 116, 95, 110, 97, 109, 101,
+            18, 5, 49, 46, 50, 46, 51, 26, 14, 10, 4, 116, 101, 115, 116, 18, 6, 10, 4, 116, 101,
+            115, 116, 32, 10, 18, 74, 9, 131, 249, 119, 254, 111, 81, 85, 23, 89, 131, 249, 119,
+            254, 111, 81, 85, 23, 16, 9, 26, 9, 116, 101, 115, 116, 95, 116, 101, 120, 116, 42, 6,
+            10, 4, 116, 101, 115, 116, 50, 14, 10, 4, 116, 101, 115, 116, 18, 6, 10, 4, 116, 101,
+            115, 116, 56, 10, 69, 1, 0, 0, 0, 74, 4, 116, 101, 115, 116, 82, 4, 116, 101, 115, 116,
+            26, 8, 104, 116, 116, 112, 115, 58, 47, 47, 26, 8, 104, 116, 116, 112, 115, 58, 47, 47,
+        ];
+
+        assert_eq!(&out, &expected[..]);
+
+        let read_message = {
+            let mut reader = BytesReader::from_bytes(&out);
+            reader
+                .read_message::<ExportLogsServiceRequest>(&out)
+                .expect("Cannot read message")
+        };
+
+        assert_eq!(logs_data, read_message);
+
+        match logs_data.validate() {
+            Err(e) => assert_eq!(e.to_string(), "empty host"),
+            Ok(_) => panic!("Validation should failed"),
+        }
+    }
+
+    #[test]
+    fn roundtrip_logs_real_otlp_request_body() {
+        use crate::opentelemetry::logs::ExportLogsServiceRequest;
+
+        let out: &[u8] = b"\n\xb6\x07\n\x8a\x06\nR\n\x0ccontainer.id\x12B\n@9d5056147df1c6b11c6fdad3ddf25fa145aca193691aeaaabda7a1a1bd7f0a55\n\x14\n\thost.arch\x12\x07\n\x05amd64\n\x1b\n\thost.name\x12\x0e\n\x0c9d5056147df1\n*\n\x0eos.description\x12\x18\n\x16Linux 5.15.49-linuxkit\n\x12\n\x07os.type\x12\x07\n\x05linux\nh\n\x14process.command_line\x12P\nN/opt/java/openjdk/bin/java -javaagent:/usr/src/app/opentelemetry-javaagent.jar\n7\n\x17process.executable.path\x12\x1c\n\x1a/opt/java/openjdk/bin/java\n\x11\n\x0bprocess.pid\x12\x02\x18\x01\nT\n\x1bprocess.runtime.description\x125\n3Eclipse Adoptium OpenJDK 64-Bit Server VM 17.0.6+10\n5\n\x14process.runtime.name\x12\x1d\n\x1bOpenJDK Runtime Environment\n&\n\x17process.runtime.version\x12\x0b\n\t17.0.6+10\n\x1b\n\x0cservice.name\x12\x0b\n\tadservice\n)\n\x11service.namespace\x12\x14\n\x12opentelemetry-demo\n\"\n\x16telemetry.auto.version\x12\x08\n\x061.23.0\n \n\x16telemetry.sdk.language\x12\x06\n\x04java\n%\n\x12telemetry.sdk.name\x12\x0f\n\ropentelemetry\n!\n\x15telemetry.sdk.version\x12\x08\n\x061.23.1\x12~\n\x14\n\x12oteldemo.AdService\x12f\tQ\xb3\xed\xd9;-W\x17\x10\t\x1a\x04INFO*2\n0received ad request (context_words=[binoculars])E\x01\0\0\0J\x10\xd5]\xf0\x98\xb0\xdc\xe4\x14p\xdf&*\\Z\xdb8R\x08\xb2\x89\t\x8es\xa7\x1f\x9e\x1a'https://opentelemetry.io/schemas/1.18.0";
+
+        ExportLogsServiceRequest::try_from(out)
+            .expect("Parsing of logs protobuf failed")
+            .validate()
+            .expect("Validation of logs protobuf failed");
     }
 }
