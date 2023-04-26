@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/answerbook/opentelemetry-rs/compare/v1.0.0...v1.1.0) (2023-04-26)
+
+
+### Features
+
+* **logs**: added logs protobuf parse and validation [756616c](https://github.com/answerbook/opentelemetry-rs/commit/756616cfb3a93c6228fad5291c36a10957bbfff7) - Sergey Opria [LOG-16657](https://logdna.atlassian.net/browse/LOG-16657)
+
 # 1.0.0 (2023-04-25)
 
 
