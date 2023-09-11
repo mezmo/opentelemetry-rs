@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/answerbook/opentelemetry-rs/compare/v1.1.0...v1.2.0) (2023-09-11)
+
+
+### Features
+
+* **trace**: added trace protobuf parse and validation [4e3379d](https://github.com/answerbook/opentelemetry-rs/commit/4e3379d5359ff237c06d343d28f5b8a7245b3260) - Sergey Opria [LOG-18072](https://logdna.atlassian.net/browse/LOG-18072)
+
 # [1.1.0](https://github.com/answerbook/opentelemetry-rs/compare/v1.0.0...v1.1.0) (2023-04-26)
 
 
