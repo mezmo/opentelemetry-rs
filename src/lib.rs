@@ -45,7 +45,7 @@ pub mod opentelemetry {
         };
         pub use crate::opentelemetry_types::opentelemetry::proto::trace::v1::{
             mod_Span::Event as SpanEvent, mod_Span::Link as SpanLink, mod_Span::SpanKind,
-            mod_Status::StatusCode, ResourceSpans, ScopeSpans, Span, Status, TracesData,
+            mod_Status::StatusCode, ResourceSpans, ScopeSpans, Span, Status, ExportTraceServiceRequest,
         };
         pub use crate::validation::trace::TraceValidate as Validate;
     }
@@ -88,12 +88,12 @@ impl<'a> TryFrom<&'a [u8]> for opentelemetry::logs::ExportLogsServiceRequest<'a>
     }
 }
 
-impl<'a> TryFrom<&'a [u8]> for opentelemetry::trace::TracesData<'a> {
+impl<'a> TryFrom<&'a [u8]> for opentelemetry::trace::ExportTraceServiceRequest<'a> {
     type Error = crate::Error;
 
     fn try_from(bytes: &'a [u8]) -> Result<Self, Self::Error> {
         let mut reader = quick_protobuf::BytesReader::from_bytes(bytes);
-        Ok(opentelemetry::trace::TracesData::from_reader(
+        Ok(opentelemetry::trace::ExportTraceServiceRequest::from_reader(
             &mut reader,
             bytes,
         )?)
@@ -913,7 +913,7 @@ mod tests {
     fn roundtrip_trace_valid_data() {
         use crate::opentelemetry::trace::{
             AnyValue, AnyValueOneOfvalue, InstrumentationScope, KeyValue, Resource, ResourceSpans,
-            ScopeSpans, Span, SpanEvent, SpanKind, SpanLink, Status, StatusCode, TracesData,
+            ScopeSpans, Span, SpanEvent, SpanKind, SpanLink, Status, StatusCode, ExportTraceServiceRequest,
         };
 
         let mut out = vec![];
@@ -925,7 +925,7 @@ mod tests {
             }),
         };
 
-        let logs_data = TracesData {
+        let logs_data = ExportTraceServiceRequest {
             resource_spans: vec![ResourceSpans {
                 resource: Some(Resource {
                     attributes: vec![key_value.clone()],
@@ -1005,7 +1005,7 @@ mod tests {
         let read_message = {
             let mut reader = BytesReader::from_bytes(&out);
             reader
-                .read_message::<TracesData>(&out)
+                .read_message::<ExportTraceServiceRequest>(&out)
                 .expect("Cannot read message")
         };
         assert_eq!(logs_data, read_message);
@@ -1014,11 +1014,11 @@ mod tests {
 
     #[test]
     fn roundtrip_trace_real_otlp_request_body() {
-        use crate::opentelemetry::trace::TracesData;
+        use crate::opentelemetry::trace::ExportTraceServiceRequest;
 
         let out: &[u8] = b"\n\xb3\x0b\n\x83\x03\n \n\x15telemetry.sdk.version\x12\x07\n\x051.2.1\n%\n\x12telemetry.sdk.name\x12\x0f\n\ropentelemetry\n\"\n\x16telemetry.sdk.language\x12\x08\n\x06erlang\n$\n\x0cservice.name\x12\x14\n\x12featureflagservice\n8\n\x13service.instance.id\x12!\n\x1ffeatureflagservice@d69d857131ac\n%\n\x17process.runtime.version\x12\n\n\x0811.2.2.8\n\x1e\n\x14process.runtime.name\x12\x06\n\x04BEAM\n<\n\x1bprocess.runtime.description\x12\x1d\n\x1bErlang/OTP 23 erts-11.2.2.8\n/\n\x17process.executable.name\x12\x14\n\x12featureflagservice\x12\x92\x04\n\x1e\n\x15opentelemetry_phoenix\x12\x051.0.0\x12\xef\x03\n\x10\xc4\xce\xa2\"\x12\nVl\xea\xf63E\0\xab\x01(\x12\x08>@\xb3&\xa3)\x08\x97\"\0*\x01/0\x029x\xc4\xb6\xdc[\xc4\x82\x17A9\x90\xcc\xdc[\xc4\x82\x17J=\n\x0cphoenix.plug\x12-\n+Elixir.FeatureflagserviceWeb.PageControllerJ\x19\n\x0ephoenix.action\x12\x07\n\x05indexJ\x19\n\rnet.transport\x12\x08\n\x06IP.TCPJ\x15\n\rnet.peer.port\x12\x04\x18\xb2\x98\x02J\x1a\n\x0bnet.peer.ip\x12\x0b\n\t127.0.0.1J\x14\n\rnet.host.port\x12\x03\x18\x91?J\x1a\n\x0bnet.host.ip\x12\x0b\n\t127.0.0.1J \n\x0fhttp.user_agent\x12\r\n\x0bcurl/7.74.0J\x12\n\x0bhttp.target\x12\x03\n\x01/J\x17\n\x10http.status_code\x12\x03\x18\xc8\x01J\x15\n\x0bhttp.scheme\x12\x06\n\x04httpJ\x11\n\nhttp.route\x12\x03\n\x01/J\x14\n\x0bhttp.method\x12\x05\n\x03GETJ\x18\n\thttp.host\x12\x0b\n\tlocalhostJ\x14\n\x0bhttp.flavor\x12\x05\n\x031.1J\x1d\n\x0ehttp.client_ip\x12\x0b\n\t127.0.0.1z\0\x12\x95\x04\n\x1b\n\x12opentelemetry_ecto\x12\x051.0.0\x12\xf5\x03\n\x10\xc4\xce\xa2\"\x12\nVl\xea\xf63E\0\xab\x01(\x12\x08u\xe5\x7fF\t\xad\xff\x0e\"\x08>@\xb3&\xa3)\x08\x97**featureflagservice.repo.query:featureflags0\x039\xbf$\xbb\xdc[\xc4\x82\x17AN\xef\xc6\xdc[\xc4\x82\x17J\x1e\n\x17total_time_microseconds\x12\x03\x18\xa2\x04J\x18\n\x06source\x12\x0e\n\x0cfeatureflagsJ\x1d\n\x17queue_time_microseconds\x12\x02\x184J\x1e\n\x17query_time_microseconds\x12\x03\x18\xe9\x03J\x1e\n\x16idle_time_microseconds\x12\x04\x18\xf3\xd5#J\x1e\n\x18decode_time_microseconds\x12\x02\x18\x05J\x1f\n\x06db.url\x12\x15\n\x13ecto://ffs_postgresJ\x10\n\x07db.type\x12\x05\n\x03sqlJ\x88\x01\n\x0cdb.statement\x12x\nvSELECT f0.\"id\", f0.\"description\", f0.\"enabled\", f0.\"name\", f0.\"inserted_at\", f0.\"updated_at\" FROM \"featureflags\" AS f0J\x14\n\x0bdb.instance\x12\x05\n\x03ffsz\0";
 
-        TracesData::try_from(out)
+        ExportTraceServiceRequest::try_from(out)
             .expect("Parsing of trace protobuf failed")
             .validate()
             .expect("Validation of trace protobuf failed");

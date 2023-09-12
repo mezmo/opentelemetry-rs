@@ -1,7 +1,7 @@
 use url::Url;
 
 use crate::opentelemetry::trace::{
-    ResourceSpans, ScopeSpans, Span, SpanEvent, SpanLink, Status, TracesData,
+    ResourceSpans, ScopeSpans, Span, SpanEvent, SpanLink, Status, ExportTraceServiceRequest,
 };
 
 use crate::validation::common::*;
@@ -10,7 +10,7 @@ pub trait TraceValidate {
     fn validate(&self) -> Result<(), crate::Error>;
 }
 
-impl TraceValidate for TracesData<'_> {
+impl TraceValidate for ExportTraceServiceRequest<'_> {
     fn validate(&self) -> Result<(), crate::Error> {
         for resource_spans in &self.resource_spans {
             resource_spans.validate()?;
