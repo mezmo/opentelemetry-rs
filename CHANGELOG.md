@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/answerbook/opentelemetry-rs/compare/v1.2.0...v1.2.1) (2023-09-12)
+
+
+### Bug Fixes
+
+* **traces**: update traces proto [b746dd7](https://github.com/answerbook/opentelemetry-rs/commit/b746dd73f8fa9c0b4d0f01d85c6b79b860bb5684) - Sergey Opria [LOG-18072](https://logdna.atlassian.net/browse/LOG-18072)
+
 # [1.2.0](https://github.com/answerbook/opentelemetry-rs/compare/v1.1.0...v1.2.0) (2023-09-11)
 
 
