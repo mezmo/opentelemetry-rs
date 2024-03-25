@@ -1,25 +1,50 @@
 {
-  "name": "@answerbook/opentelemetry-rs",
+  "name": "@mezmo/opentelemetry-rs",
   "description": "A library providing quick-protobuf bindings and RFC compliant validation for OpenTelemetry metrics and logs types",
-  "version": "0.0.0",
-  "private": true,
+  "license": "Mozilla Public License 2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/mezmo/opentelemetry-rs.git"
+  },
+  "version": "1.2.1",
   "files": [
-    "release.config.js",
     "README.md"
   ],
   "scripts": {
-    "lint": "commitlint-logdna",
+    "commitlint": "./node_modules/.bin/commitlint-logdna",
     "release": "semantic-release",
     "release:dry": "semantic-release --no-ci --dry-run --branches=${BRANCH_NAME:-main}"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+ssh://git@github.com/answerbook/opentelemetry-rs.git"
+  "release": {
+    "branches": [
+      "main"
+    ],
+    "extends": [
+      "@answerbook/release-config-logdna"
+    ],
+    "plugins": [
+      "@semantic-release/commit-analyzer",
+      "@semantic-release/release-notes-generator",
+      [
+        "@semantic-release/changelog", {
+          "changelogFile": "CHANGELOG.md"
+        }
+      ],
+      [
+        "@semantic-release/github", {
+          "assets": "CHANGELOG.md"
+        }
+      ],
+      [
+        "@semantic-release/git", {
+          "assets": "CHANGELOG.md"
+        }
+      ]
+    ]
   },
-  "license": "SEE LICENSE IN LICENSE",
   "devDependencies": {
     "@answerbook/commitlint-config-logdna": "^2.1.0",
-    "@answerbook/release-config-logdna": "^1.3.0",
-    "semantic-release": "^18.0.1"
+    "@answerbook/release-config-logdna": "^2.0.1",
+    "semantic-release": "^19.0.5"
   }
 }
