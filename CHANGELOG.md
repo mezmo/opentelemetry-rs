@@ -1,3 +1,10 @@
+## [1.2.2](https://github.com/mezmo/opentelemetry-rs/compare/v1.2.1...v1.2.2) (2024-03-25)
+
+
+### Bug Fixes
+
+* **ci**: Fix `Jenkinsfile` suitable for the public [b3f6685](https://github.com/mezmo/opentelemetry-rs/commit/b3f6685204b727df89c112010c0817b8aece980f) - Darin Spivey [LOG-19546](https://logdna.atlassian.net/browse/LOG-19546)
+
 ## [1.2.1](https://github.com/answerbook/opentelemetry-rs/compare/v1.2.0...v1.2.1) (2023-09-12)
 
 
