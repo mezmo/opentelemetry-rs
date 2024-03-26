@@ -1,3 +1,10 @@
+## [1.2.3](https://github.com/mezmo/opentelemetry-rs/compare/v1.2.2...v1.2.3) (2024-03-26)
+
+
+### Bug Fixes
+
+* **ci**: `cargo-audit` force install [4286827](https://github.com/mezmo/opentelemetry-rs/commit/4286827b7b415b64bec68a9194ee5efb24c670d3) - Darin Spivey [LOG-19546](https://logdna.atlassian.net/browse/LOG-19546)
+
 ## [1.2.2](https://github.com/mezmo/opentelemetry-rs/compare/v1.2.1...v1.2.2) (2024-03-25)
 
 
