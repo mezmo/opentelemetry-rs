@@ -60,6 +60,11 @@ pipeline {
     }
 
     stage('Commitlint and dry release'){
+      when {
+        not {
+          branch DEFAULT_BRANCH
+        }
+      }
       tools {
         nodejs 'NodeJS 20'
       }
