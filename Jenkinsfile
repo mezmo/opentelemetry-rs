@@ -59,7 +59,7 @@ pipeline {
       }
     }
 
-    stage('Commitlint and dry release test'){
+    stage('Commitlint and dry release'){
       tools {
         nodejs 'NodeJS 20'
       }
@@ -80,16 +80,17 @@ pipeline {
       }
     }
 
-    stage('Unit Tests') {
-      steps {
-          sh "make clean"
-          sh 'make test'
-      }
-    }
     stage('Clippy') {
       steps {
-        // `cargo-audit` is installed on `make test` stage
+        sh 'cargo install cargo-audit'
         sh 'make lint'
+      }
+    }
+
+    stage('Unit Tests') {
+      steps {
+          sh 'make clean'
+          sh 'make test'
       }
     }
 
