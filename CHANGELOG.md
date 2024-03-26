@@ -1,3 +1,10 @@
+## [1.2.4](https://github.com/mezmo/opentelemetry-rs/compare/v1.2.3...v1.2.4) (2024-03-26)
+
+
+### Bug Fixes
+
+* **ci**: Do not run test release on main branch [a0d7244](https://github.com/mezmo/opentelemetry-rs/commit/a0d72446f6b9036c00b3fa84b3df60a1c487f4a8) - Darin Spivey [LOG-19546](https://logdna.atlassian.net/browse/LOG-19546)
+
 ## [1.2.3](https://github.com/mezmo/opentelemetry-rs/compare/v1.2.2...v1.2.3) (2024-03-26)
 
 
